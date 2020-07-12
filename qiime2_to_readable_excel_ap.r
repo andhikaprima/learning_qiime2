@@ -6,19 +6,37 @@
 
 library(dplyr)
 library(tidyr)
-library(xlsx)
+# library(xlsx)
 
 # set working directory
 # Adjusted based on you own directory
-setwd("C:/Users/EZP715/Desktop/INBIO/INBIO27 - Metagenomik Bakteri (NGS)/4. Meeting_4")
+setwd("~/Documents/0. Training/28. INBIO - Metagenomic/Output_QIIME2/ampvis2")
 
-# IMPORTANT
-# Open the tsv in the notepad DELETE first row "# Constructed from biom file" then SAVE it
+# ############# EXTRACT FROM RAW FILE TO GIVE HEADER
+# extract data
+beaverGUT <- read.delim("table.from_biom_w_taxonomy_1400.tsv", header=FALSE, comment.char="#")
 
-# Import dataset
-# Adjusted based on you own directory where the file located
-beaverGUT <- read.delim("C:/Users/EZP715/Desktop/INBIO/INBIO27 - Metagenomik Bakteri (NGS)/4. Meeting_4/table.from_biom_w_taxonomy01.tsv", stringsAsFactors=FALSE)
+# get heading
+header <- read.csv("table.from_biom_w_taxonomy_1400.tsv", header=FALSE)
 
+# Take just header row 2
+header <- data.frame(header[2, ])
+
+# Create initial column for labeling in respect to number of field in QIIME2's output
+prefix <- "V"
+suffix <- seq(1, ncol(beaverGUT))
+
+# separate the file by "tab" or "\t"
+header1 <- header %>% separate(colnames(header), c(paste(prefix, suffix, sep="")), sep="\t")
+header1
+
+# Change value of #OTU ID into OTU.ID
+header1$V1 <- c("OTU")
+
+# Assign the name
+colnames(beaverGUT) <- header1[1, ]
+
+# Checking
 # View(beaverGUT)
 # colnames(beaverGUT)
 
@@ -27,22 +45,22 @@ tax <- data.frame(beaverGUT$taxonomy)
 tax
 
 # divide taxonomy into level of taxonomy by identifying ";__"
-tax1 <- tax %>% separate(beaverGUT.taxonomy, c("kingdom", "phylum", "class", "order", "family", "genus", "species"), sep=";")
+tax1 <- tax %>% separate(beaverGUT.taxonomy, c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep=";")
 tax1
-
-# replace <NA> to "unknown"
-tax1 <- tax1 %>% replace_na(list(kingdom = "unknown", phylum = "unknown", class = "unknown", order = "unknown", family = "unknown", genus = "unknown", species = "unknown"))
-tax1
-
 
 # corrected the value, remove the initial field code
-tax1$kingdom <- gsub("k__", "", as.character(tax1$kingdom))
-tax1$phylum <- gsub("p__", "", as.character(tax1$phylum))
-tax1$class <- gsub("c__", "", as.character(tax1$class))
-tax1$order <- gsub("o__", "", as.character(tax1$order))
-tax1$family <- gsub("f__", "", as.character(tax1$family))
-tax1$genus <- gsub("g__", "", as.character(tax1$genus))
-tax1$species <- gsub("s__", "", as.character(tax1$species))
+tax1$Kingdom <- gsub("k__", "", as.character(tax1$Kingdom))
+tax1$Phylum <- gsub("p__", "", as.character(tax1$Phylum))
+tax1$Class <- gsub("c__", "", as.character(tax1$Class))
+tax1$Order <- gsub("o__", "", as.character(tax1$Order))
+tax1$Family <- gsub("f__", "", as.character(tax1$Family))
+tax1$Genus <- gsub("g__", "", as.character(tax1$Genus))
+tax1$Species <- gsub("s__", "", as.character(tax1$Species))
+tax1
+
+
+# replace <NA> to "unknown"
+tax1 <- tax1 %>% replace_na(list(Kingdom = "unknown", Phylum = "unknown", Class = "unknown", Order = "unknown", Family = "unknown", Genus = "unknown", Species = "unknown"))
 tax1
 
 # filled blank value to "unknown"
@@ -56,6 +74,11 @@ beaverGUT_new <- cbind(beaverGUT, tax1)
 # remove column taxonomy
 beaverGUT_new <- beaverGUT_new %>% select (-taxonomy) 
 
-# Export to Excel file
-write.xlsx2(beaverGUT_new, file="beaverGUT_new.xlsx", sheetName = "output", col.names = TRUE, row.names = FALSE, append = FALSE)
+# Export to csv
+write.csv(beaverGUT_new, file="beaverGUT1400.csv", row.names = FALSE)
 
+# # Export to Excel file
+# write.xlsx2(beaverGUT_new, file="beaverGUT1400.xlsx", sheetName = "output", col.names = TRUE, row.names = FALSE, append = FALSE)
+
+# Save data file
+save.image("beaverGUT1400.RData")
